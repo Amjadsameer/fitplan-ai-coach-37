@@ -10,7 +10,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const { t } = useApp();
+  const { t, lang, setLang } = useApp();
   const { isAuthed, login } = useAuth();
   const { redirect } = Route.useSearch();
   const navigate = useNavigate();
@@ -32,14 +32,23 @@ function LoginPage() {
       <div className="bg-gradient-hero relative overflow-hidden px-6 pb-12 pt-16 text-primary-foreground">
         <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
         <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-black/10 blur-2xl" />
-        <div className="relative flex items-center gap-3">
-          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white/15 backdrop-blur">
-            <Dumbbell className="h-6 w-6" />
+        <div className="relative flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/15 backdrop-blur">
+              <Dumbbell className="h-6 w-6" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="truncate text-2xl font-extrabold tracking-tight">{t.appName}</h1>
+              <p className="truncate text-sm opacity-90">{t.tagline}</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight">{t.appName}</h1>
-            <p className="text-sm opacity-90">{t.tagline}</p>
-          </div>
+          <button
+            type="button"
+            onClick={() => setLang(lang === "en" ? "ar" : "en")}
+            className="tap shrink-0 rounded-full bg-white/20 px-3 py-1.5 text-xs font-bold backdrop-blur"
+          >
+            {lang === "en" ? "العربية" : "English"}
+          </button>
         </div>
       </div>
 
