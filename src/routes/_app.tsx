@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate, Outlet, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Navigate, useRouterState } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { useAuth } from "@/lib/auth";
 
@@ -12,6 +12,3 @@ function AppLayout() {
   if (!isAuthed) return <Navigate to="/login" search={{ redirect: pathname }} />;
   return <AppShell />;
 }
-
-// Outlet is rendered inside AppShell
-export { Outlet };
