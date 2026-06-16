@@ -144,7 +144,7 @@ const translations = {
       greekYogurt: "زبادي يوناني ولوز",
     },
   },
-} as const;
+};
 
 type Dict = typeof translations.en;
 
