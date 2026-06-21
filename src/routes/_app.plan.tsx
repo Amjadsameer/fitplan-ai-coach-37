@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, ChevronRight, Clock, Heart, Repeat2, Sparkles } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Check, ChevronRight, Clock, Heart, Loader2, Repeat2, Sparkles, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/lib/i18n";
+import { generateMealSwap } from "@/lib/meals.functions";
 
 export const Route = createFileRoute("/_app/plan")({
   component: PlanPage,
