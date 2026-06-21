@@ -222,6 +222,52 @@ function PlanPage() {
           ✓ {toast}
         </div>
       )}
+
+      {aiMealId && (() => {
+        const m = meals.find(x => x.id === aiMealId);
+        if (!m) return null;
+        const target = m.variants[0].kcal;
+        return (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/40 backdrop-blur-sm p-0 sm:items-center sm:p-4 animate-fade-in-up" onClick={() => !loading && setAiMealId(null)}>
+            <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-card border border-border shadow-card p-5 space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{m.type}</p>
+                  <h2 className="text-lg font-extrabold flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> {t.aiSwap}</h2>
+                </div>
+                <button onClick={() => !loading && setAiMealId(null)} className="tap grid h-9 w-9 place-items-center rounded-full bg-muted">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="rounded-2xl bg-gradient-hero p-4 text-primary-foreground">
+                <p className="text-[11px] uppercase tracking-wider opacity-80">{t.targetCalories}</p>
+                <p className="font-display text-2xl font-extrabold tabular-nums">{target} <span className="text-sm opacity-80">kcal</span></p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">{t.availableIngredients}</label>
+                <textarea
+                  value={ingredients}
+                  onChange={(e) => setIngredients(e.target.value)}
+                  placeholder={t.ingredientsPlaceholder}
+                  rows={3}
+                  disabled={loading}
+                  className="w-full resize-none rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary disabled:opacity-50"
+                />
+              </div>
+
+              <button
+                onClick={runAiSwap}
+                disabled={loading}
+                className="tap w-full rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-70 flex items-center justify-center gap-2"
+              >
+                {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> {t.generating}</> : <><Sparkles className="h-4 w-4" /> {t.generate}</>}
+              </button>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
