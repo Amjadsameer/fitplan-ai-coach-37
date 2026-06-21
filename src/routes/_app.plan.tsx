@@ -198,10 +198,10 @@ function PlanPage() {
 
                   <div className="flex gap-2">
                     <button
-                      onClick={(e) => { e.preventDefault(); swapMeal(m); }}
+                      onClick={(e) => { e.preventDefault(); openAiSwap(m); }}
                       className="tap inline-flex shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-border bg-card px-4 py-3 text-sm font-semibold"
                     >
-                      <Repeat2 className="h-4 w-4" /> {t.swap}
+                      <Sparkles className="h-4 w-4" /> {t.aiSwap}
                     </button>
                     <button
                       onClick={(e) => { e.preventDefault(); setCompleted(s => ({ ...s, [m.id]: !s[m.id] })); }}
