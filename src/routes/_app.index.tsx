@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Bell, Droplets, Flame } from "lucide-react";
 import { ProgressRing } from "@/components/ProgressRing";
 import { MacroBar } from "@/components/MacroBar";
@@ -94,12 +94,17 @@ function HomePage() {
         <MacroBar label={t.completed} value={doneCount} max={meals.length} unit="" color="var(--color-primary)" />
         <ul className="space-y-2 pt-1">
           {meals.map(m => (
-            <li key={m.name} className="flex items-center justify-between rounded-xl bg-muted/50 px-3 py-2.5">
-              <div className="flex items-center gap-3">
-                <span className={`h-2.5 w-2.5 rounded-full ${m.done ? "bg-primary" : "bg-muted-foreground/40"}`} />
-                <span className={`text-sm font-medium ${m.done ? "" : "text-muted-foreground"}`}>{m.name}</span>
-              </div>
-              <span className="text-xs font-semibold tabular-nums text-muted-foreground">{m.kcal} kcal</span>
+            <li key={m.name}>
+              <Link
+                to="/plan"
+                className="tap flex items-center justify-between rounded-xl bg-muted/50 px-3 py-2.5 transition-colors hover:bg-muted"
+              >
+                <div className="flex items-center gap-3">
+                  <span className={`h-2.5 w-2.5 rounded-full ${m.done ? "bg-primary" : "bg-muted-foreground/40"}`} />
+                  <span className={`text-sm font-medium ${m.done ? "" : "text-muted-foreground"}`}>{m.name}</span>
+                </div>
+                <span className="text-xs font-semibold tabular-nums text-muted-foreground">{m.kcal} kcal</span>
+              </Link>
             </li>
           ))}
         </ul>
