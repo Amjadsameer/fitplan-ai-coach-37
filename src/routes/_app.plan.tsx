@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, ChevronRight, Clock, Heart, Loader2, Repeat2, Sparkles, X } from "lucide-react";
+import { Check, ChevronRight, Clock, Heart, Loader2, Sparkles, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/lib/i18n";
 import { generateMealSwap } from "@/lib/meals.functions";
@@ -26,7 +26,7 @@ function PlanPage() {
   const { t, lang } = useApp();
   const swapFn = useServerFn(generateMealSwap);
   const [completed, setCompleted] = useState<Record<string, boolean>>({ breakfast: true });
-  const [variantIdx, setVariantIdx] = useState<Record<string, number>>({});
+  const [variantIdx] = useState<Record<string, number>>({});
   const [aiOverrides, setAiOverrides] = useState<Record<string, MealVariant>>({});
   const [favorites, setFavorites] = useState<string[]>([]);
   const [toast, setToast] = useState<string | null>(null);
