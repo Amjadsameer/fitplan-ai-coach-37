@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, ChevronRight, Clock, Heart, Repeat2, Sparkles } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Check, ChevronRight, Clock, Heart, Loader2, Sparkles, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/lib/i18n";
+import { generateMealSwap } from "@/lib/meals.functions";
 
 export const Route = createFileRoute("/_app/plan")({
   component: PlanPage,
@@ -21,11 +23,16 @@ interface Meal {
 }
 
 function PlanPage() {
-  const { t } = useApp();
+  const { t, lang } = useApp();
+  const swapFn = useServerFn(generateMealSwap);
   const [completed, setCompleted] = useState<Record<string, boolean>>({ breakfast: true });
-  const [variantIdx, setVariantIdx] = useState<Record<string, number>>({});
+  const [variantIdx] = useState<Record<string, number>>({});
+  const [aiOverrides, setAiOverrides] = useState<Record<string, MealVariant>>({});
   const [favorites, setFavorites] = useState<string[]>([]);
   const [toast, setToast] = useState<string | null>(null);
+  const [aiMealId, setAiMealId] = useState<string | null>(null);
+  const [ingredients, setIngredients] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const f = localStorage.getItem("fp_favorites");
@@ -54,13 +61,49 @@ function PlanPage() {
     ]},
   ], [t]);
 
-  const getVariant = (m: Meal) => m.variants[(variantIdx[m.id] ?? 0) % m.variants.length];
+  const getVariant = (m: Meal): MealVariant =>
+    aiOverrides[m.id] ?? m.variants[(variantIdx[m.id] ?? 0) % m.variants.length];
   const total = meals.reduce((a, m) => a + getVariant(m).kcal, 0);
 
-  const swapMeal = (m: Meal) => {
-    setVariantIdx(s => ({ ...s, [m.id]: ((s[m.id] ?? 0) + 1) % m.variants.length }));
-    setToast(t.swapped);
-    setTimeout(() => setToast(null), 1500);
+  const openAiSwap = (m: Meal) => {
+    setAiMealId(m.id);
+    setIngredients("");
+  };
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 1800);
+  };
+
+  const runAiSwap = async () => {
+    const m = meals.find(x => x.id === aiMealId);
+    if (!m) return;
+    setLoading(true);
+    try {
+      const baseKcal = m.variants[0].kcal;
+      const recipe = await swapFn({
+        data: { mealType: m.type, targetKcal: baseKcal, ingredients, lang },
+      });
+      setAiOverrides(s => ({
+        ...s,
+        [m.id]: {
+          kcal: Math.round(recipe.kcal),
+          p: Math.round(recipe.p),
+          c: Math.round(recipe.c),
+          f: Math.round(recipe.f),
+          items: [{ name: recipe.name, qty: "" }, ...recipe.items],
+        },
+      }));
+      setAiMealId(null);
+      showToast(t.swapped);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("RATE_LIMITED")) showToast(t.rateLimited);
+      else if (msg.includes("CREDITS_EXHAUSTED")) showToast(t.creditsExhausted);
+      else showToast(t.aiError);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleFav = (name: string) => {
@@ -155,10 +198,10 @@ function PlanPage() {
 
                   <div className="flex gap-2">
                     <button
-                      onClick={(e) => { e.preventDefault(); swapMeal(m); }}
+                      onClick={(e) => { e.preventDefault(); openAiSwap(m); }}
                       className="tap inline-flex shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-border bg-card px-4 py-3 text-sm font-semibold"
                     >
-                      <Repeat2 className="h-4 w-4" /> {t.swap}
+                      <Sparkles className="h-4 w-4" /> {t.aiSwap}
                     </button>
                     <button
                       onClick={(e) => { e.preventDefault(); setCompleted(s => ({ ...s, [m.id]: !s[m.id] })); }}
@@ -179,6 +222,52 @@ function PlanPage() {
           ✓ {toast}
         </div>
       )}
+
+      {aiMealId && (() => {
+        const m = meals.find(x => x.id === aiMealId);
+        if (!m) return null;
+        const target = m.variants[0].kcal;
+        return (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/40 backdrop-blur-sm p-0 sm:items-center sm:p-4 animate-fade-in-up" onClick={() => !loading && setAiMealId(null)}>
+            <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-card border border-border shadow-card p-5 space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{m.type}</p>
+                  <h2 className="text-lg font-extrabold flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> {t.aiSwap}</h2>
+                </div>
+                <button onClick={() => !loading && setAiMealId(null)} className="tap grid h-9 w-9 place-items-center rounded-full bg-muted">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="rounded-2xl bg-gradient-hero p-4 text-primary-foreground">
+                <p className="text-[11px] uppercase tracking-wider opacity-80">{t.targetCalories}</p>
+                <p className="font-display text-2xl font-extrabold tabular-nums">{target} <span className="text-sm opacity-80">kcal</span></p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">{t.availableIngredients}</label>
+                <textarea
+                  value={ingredients}
+                  onChange={(e) => setIngredients(e.target.value)}
+                  placeholder={t.ingredientsPlaceholder}
+                  rows={3}
+                  disabled={loading}
+                  className="w-full resize-none rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary disabled:opacity-50"
+                />
+              </div>
+
+              <button
+                onClick={runAiSwap}
+                disabled={loading}
+                className="tap w-full rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-70 flex items-center justify-center gap-2"
+              >
+                {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> {t.generating}</> : <><Sparkles className="h-4 w-4" /> {t.generate}</>}
+              </button>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
