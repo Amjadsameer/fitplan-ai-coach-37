@@ -23,11 +23,16 @@ interface Meal {
 }
 
 function PlanPage() {
-  const { t } = useApp();
+  const { t, lang } = useApp();
+  const swapFn = useServerFn(generateMealSwap);
   const [completed, setCompleted] = useState<Record<string, boolean>>({ breakfast: true });
   const [variantIdx, setVariantIdx] = useState<Record<string, number>>({});
+  const [aiOverrides, setAiOverrides] = useState<Record<string, MealVariant>>({});
   const [favorites, setFavorites] = useState<string[]>([]);
   const [toast, setToast] = useState<string | null>(null);
+  const [aiMealId, setAiMealId] = useState<string | null>(null);
+  const [ingredients, setIngredients] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const f = localStorage.getItem("fp_favorites");
@@ -56,13 +61,49 @@ function PlanPage() {
     ]},
   ], [t]);
 
-  const getVariant = (m: Meal) => m.variants[(variantIdx[m.id] ?? 0) % m.variants.length];
+  const getVariant = (m: Meal): MealVariant =>
+    aiOverrides[m.id] ?? m.variants[(variantIdx[m.id] ?? 0) % m.variants.length];
   const total = meals.reduce((a, m) => a + getVariant(m).kcal, 0);
 
-  const swapMeal = (m: Meal) => {
-    setVariantIdx(s => ({ ...s, [m.id]: ((s[m.id] ?? 0) + 1) % m.variants.length }));
-    setToast(t.swapped);
-    setTimeout(() => setToast(null), 1500);
+  const openAiSwap = (m: Meal) => {
+    setAiMealId(m.id);
+    setIngredients("");
+  };
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 1800);
+  };
+
+  const runAiSwap = async () => {
+    const m = meals.find(x => x.id === aiMealId);
+    if (!m) return;
+    setLoading(true);
+    try {
+      const baseKcal = m.variants[0].kcal;
+      const recipe = await swapFn({
+        data: { mealType: m.type, targetKcal: baseKcal, ingredients, lang },
+      });
+      setAiOverrides(s => ({
+        ...s,
+        [m.id]: {
+          kcal: Math.round(recipe.kcal),
+          p: Math.round(recipe.p),
+          c: Math.round(recipe.c),
+          f: Math.round(recipe.f),
+          items: [{ name: recipe.name, qty: "" }, ...recipe.items],
+        },
+      }));
+      setAiMealId(null);
+      showToast(t.swapped);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("RATE_LIMITED")) showToast(t.rateLimited);
+      else if (msg.includes("CREDITS_EXHAUSTED")) showToast(t.creditsExhausted);
+      else showToast(t.aiError);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleFav = (name: string) => {
