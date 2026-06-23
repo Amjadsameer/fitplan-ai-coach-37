@@ -45,6 +45,7 @@ function PlanPage() {
   const [currency, setCurrency] = useState("USD");
   const [planLoading, setPlanLoading] = useState(false);
   const [weekly, setWeekly] = useState<WeeklyPlan | null>(null);
+  const [selectedDay, setSelectedDay] = useState(0);
 
   useEffect(() => {
     const w = localStorage.getItem("fp_weekly");
@@ -62,24 +63,35 @@ function PlanPage() {
     localStorage.setItem("fp_favorites", JSON.stringify(favorites));
   }, [favorites]);
 
-  const meals: Meal[] = useMemo(() => [
-    { id: "breakfast", type: t.breakfast, time: "08:00", variants: [
-      { kcal: 420, p: 28, c: 52, f: 12, items: [{ name: t.meals.oatmeal, qty: "80g" }, { name: t.meals.greekYogurt, qty: "150g" }] },
-      { kcal: 410, p: 30, c: 38, f: 16, items: [{ name: t.meals.eggs, qty: "3 eggs" }, { name: "Avocado toast", qty: "1 slice" }] },
-    ]},
-    { id: "lunch", type: t.lunch, time: "13:00", variants: [
-      { kcal: 650, p: 48, c: 70, f: 18, items: [{ name: t.meals.chicken, qty: "180g" }, { name: "Mixed salad", qty: "200g" }] },
-      { kcal: 640, p: 50, c: 65, f: 20, items: [{ name: "Beef & rice bowl", qty: "180g" }, { name: "Steamed veg", qty: "200g" }] },
-    ]},
-    { id: "dinner", type: t.dinner, time: "19:30", variants: [
-      { kcal: 580, p: 42, c: 55, f: 20, items: [{ name: t.meals.salmon, qty: "200g" }, { name: "Sweet potato", qty: "150g" }] },
-      { kcal: 570, p: 44, c: 50, f: 22, items: [{ name: "Tuna pasta", qty: "200g" }, { name: "Green beans", qty: "150g" }] },
-    ]},
-    { id: "snacks", type: t.snacks, time: "16:00", variants: [
-      { kcal: 220, p: 14, c: 22, f: 8, items: [{ name: t.meals.greekYogurt, qty: "120g" }] },
-      { kcal: 210, p: 12, c: 25, f: 7, items: [{ name: "Protein shake", qty: "1 scoop" }, { name: "Banana", qty: "1" }] },
-    ]},
-  ], [t]);
+  const meals: Meal[] = useMemo(() => {
+    if (weekly && weekly.days[selectedDay]) {
+      const times = ["08:00", "13:00", "16:00", "19:30", "21:30"];
+      return weekly.days[selectedDay].meals.map((mm, i) => ({
+        id: `w${selectedDay}-${i}`,
+        type: mm.type,
+        time: times[i] ?? "—",
+        variants: [{ kcal: mm.kcal, p: mm.p, c: mm.c, f: mm.f, items: [{ name: mm.name, qty: "" }, ...mm.items] }],
+      }));
+    }
+    return [
+      { id: "breakfast", type: t.breakfast, time: "08:00", variants: [
+        { kcal: 420, p: 28, c: 52, f: 12, items: [{ name: t.meals.oatmeal, qty: "80g" }, { name: t.meals.greekYogurt, qty: "150g" }] },
+        { kcal: 410, p: 30, c: 38, f: 16, items: [{ name: t.meals.eggs, qty: "3 eggs" }, { name: "Avocado toast", qty: "1 slice" }] },
+      ]},
+      { id: "lunch", type: t.lunch, time: "13:00", variants: [
+        { kcal: 650, p: 48, c: 70, f: 18, items: [{ name: t.meals.chicken, qty: "180g" }, { name: "Mixed salad", qty: "200g" }] },
+        { kcal: 640, p: 50, c: 65, f: 20, items: [{ name: "Beef & rice bowl", qty: "180g" }, { name: "Steamed veg", qty: "200g" }] },
+      ]},
+      { id: "dinner", type: t.dinner, time: "19:30", variants: [
+        { kcal: 580, p: 42, c: 55, f: 20, items: [{ name: t.meals.salmon, qty: "200g" }, { name: "Sweet potato", qty: "150g" }] },
+        { kcal: 570, p: 44, c: 50, f: 22, items: [{ name: "Tuna pasta", qty: "200g" }, { name: "Green beans", qty: "150g" }] },
+      ]},
+      { id: "snacks", type: t.snacks, time: "16:00", variants: [
+        { kcal: 220, p: 14, c: 22, f: 8, items: [{ name: t.meals.greekYogurt, qty: "120g" }] },
+        { kcal: 210, p: 12, c: 25, f: 7, items: [{ name: "Protein shake", qty: "1 scoop" }, { name: "Banana", qty: "1" }] },
+      ]},
+    ];
+  }, [t, weekly, selectedDay]);
 
   const getVariant = (m: Meal): MealVariant =>
     aiOverrides[m.id] ?? m.variants[(variantIdx[m.id] ?? 0) % m.variants.length];
@@ -137,6 +149,9 @@ function PlanPage() {
     try {
       const res = await weeklyFn({ data: { goal, budget: b, currency, lang } });
       setWeekly(res);
+      setSelectedDay(0);
+      setAiOverrides({});
+      setCompleted({});
       setPlanOpen(false);
       showToast(t.swapped);
     } catch (err: unknown) {
@@ -180,54 +195,29 @@ function PlanPage() {
       </button>
 
       {weekly && (
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-extrabold">{t.weeklyPlan}</h2>
-            <span className="text-xs text-muted-foreground tabular-nums">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">{t.weeklyPlan}</h2>
+            <span className="text-[11px] font-semibold text-muted-foreground tabular-nums">
               {Math.round(weekly.days.reduce((a,d)=>a+d.totalCost,0))} / {weekly.weeklyBudget} {weekly.currency}
             </span>
           </div>
-          <ul className="space-y-2">
-            {weekly.days.map((d, i) => (
-              <li key={i} className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
-                <details className="group">
-                  <summary className="flex cursor-pointer list-none items-center gap-3 p-3">
-                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-muted text-xs font-bold">
-                      {t.days[i] ?? d.day}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold">{d.day}</p>
-                      <p className="text-xs text-muted-foreground tabular-nums">
-                        {d.totalKcal} kcal · {Math.round(d.totalCost)} {weekly.currency}
-                      </p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-90 rtl:rotate-180 rtl:group-open:rotate-90" />
-                  </summary>
-                  <div className="border-t border-border bg-muted/30 p-3 space-y-2">
-                    {d.meals.map((mm, j) => (
-                      <div key={j} className="rounded-xl bg-card p-3">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-semibold truncate">{mm.type} · {mm.name}</p>
-                          <span className="shrink-0 text-[11px] font-bold text-muted-foreground tabular-nums">
-                            {mm.kcal} kcal · {Math.round(mm.cost)} {weekly.currency}
-                          </span>
-                        </div>
-                        <ul className="mt-1.5 space-y-0.5">
-                          {mm.items.map((it, k) => (
-                            <li key={k} className="flex justify-between text-xs text-muted-foreground">
-                              <span className="truncate">{it.name}</span>
-                              <span className="shrink-0 tabular-nums">{it.qty}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              </li>
-            ))}
-          </ul>
-        </section>
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-none -mx-1 px-1 pb-1">
+            {weekly.days.map((d, i) => {
+              const active = i === selectedDay;
+              return (
+                <button
+                  key={i}
+                  onClick={() => setSelectedDay(i)}
+                  className={`tap shrink-0 rounded-2xl px-3 py-2 text-center transition-all ${active ? "bg-gradient-primary text-primary-foreground shadow-glow" : "bg-card border border-border text-foreground"}`}
+                >
+                  <p className="text-[10px] font-bold uppercase opacity-80">{t.days[i] ?? d.day.slice(0, 3)}</p>
+                  <p className="text-[11px] font-semibold tabular-nums">{d.totalKcal}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       <div className="rounded-3xl bg-gradient-hero p-5 text-primary-foreground shadow-glow">
