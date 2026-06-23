@@ -374,6 +374,73 @@ function PlanPage() {
           </div>
         );
       })()}
+
+      {planOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/40 backdrop-blur-sm p-0 sm:items-center sm:p-4 animate-fade-in-up" onClick={() => !planLoading && setPlanOpen(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-card border border-border shadow-card p-5 space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t.weeklyPlan}</p>
+                <h2 className="text-lg font-extrabold flex items-center gap-2"><Wand2 className="h-4 w-4 text-primary" /> {t.createPlan}</h2>
+              </div>
+              <button onClick={() => !planLoading && setPlanOpen(false)} className="tap grid h-9 w-9 place-items-center rounded-full bg-muted">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground">{t.selectGoal}</label>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { id: "bulk" as const, label: t.goalBulk },
+                  { id: "cut" as const, label: t.goalCut },
+                  { id: "lose" as const, label: t.goalLose },
+                ]).map(g => (
+                  <button
+                    key={g.id}
+                    onClick={() => setGoal(g.id)}
+                    disabled={planLoading}
+                    className={`tap rounded-2xl py-3 text-xs font-bold border transition-all ${goal === g.id ? "bg-gradient-primary text-primary-foreground border-transparent shadow-glow" : "bg-card text-foreground border-border"}`}
+                  >
+                    {g.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-2 space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">{t.weeklyBudget}</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={budget}
+                  onChange={(e) => setBudget(e.target.value)}
+                  disabled={planLoading}
+                  className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary disabled:opacity-50 tabular-nums"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">{t.currency}</label>
+                <input
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value.toUpperCase().slice(0, 4))}
+                  disabled={planLoading}
+                  className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm outline-none focus:border-primary disabled:opacity-50 uppercase"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={runWeeklyPlan}
+              disabled={planLoading}
+              className="tap w-full rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-70 flex items-center justify-center gap-2"
+            >
+              {planLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> {t.generating}</> : <><Sparkles className="h-4 w-4" /> {t.generatePlan}</>}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
