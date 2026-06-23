@@ -1,13 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, ChevronRight, Clock, Heart, Loader2, Sparkles, X } from "lucide-react";
+import { Check, ChevronRight, Clock, Heart, Loader2, Sparkles, Wand2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/lib/i18n";
-import { generateMealSwap } from "@/lib/meals.functions";
+import { generateMealSwap, generateWeeklyPlan } from "@/lib/meals.functions";
 
 export const Route = createFileRoute("/_app/plan")({
   component: PlanPage,
 });
+
+type Goal = "bulk" | "cut" | "lose";
+interface WeeklyMeal { type: string; name: string; items: { name: string; qty: string }[]; kcal: number; p: number; c: number; f: number; cost: number; }
+interface WeeklyDay { day: string; totalKcal: number; totalCost: number; meals: WeeklyMeal[]; }
+interface WeeklyPlan { goal: string; dailyKcalTarget: number; weeklyBudget: number; currency: string; days: WeeklyDay[]; }
 
 interface MealItem { name: string; qty: string; }
 interface MealVariant {
@@ -25,6 +30,7 @@ interface Meal {
 function PlanPage() {
   const { t, lang } = useApp();
   const swapFn = useServerFn(generateMealSwap);
+  const weeklyFn = useServerFn(generateWeeklyPlan);
   const [completed, setCompleted] = useState<Record<string, boolean>>({ breakfast: true });
   const [variantIdx] = useState<Record<string, number>>({});
   const [aiOverrides, setAiOverrides] = useState<Record<string, MealVariant>>({});
@@ -33,6 +39,20 @@ function PlanPage() {
   const [aiMealId, setAiMealId] = useState<string | null>(null);
   const [ingredients, setIngredients] = useState("");
   const [loading, setLoading] = useState(false);
+  const [planOpen, setPlanOpen] = useState(false);
+  const [goal, setGoal] = useState<Goal>("cut");
+  const [budget, setBudget] = useState("100");
+  const [currency, setCurrency] = useState("USD");
+  const [planLoading, setPlanLoading] = useState(false);
+  const [weekly, setWeekly] = useState<WeeklyPlan | null>(null);
+
+  useEffect(() => {
+    const w = localStorage.getItem("fp_weekly");
+    if (w) try { setWeekly(JSON.parse(w)); } catch {}
+  }, []);
+  useEffect(() => {
+    if (weekly) localStorage.setItem("fp_weekly", JSON.stringify(weekly));
+  }, [weekly]);
 
   useEffect(() => {
     const f = localStorage.getItem("fp_favorites");
@@ -110,6 +130,25 @@ function PlanPage() {
     setFavorites(f => f.includes(name) ? f.filter(x => x !== name) : [...f, name]);
   };
 
+  const runWeeklyPlan = async () => {
+    const b = parseFloat(budget);
+    if (!b || b <= 0) return;
+    setPlanLoading(true);
+    try {
+      const res = await weeklyFn({ data: { goal, budget: b, currency, lang } });
+      setWeekly(res);
+      setPlanOpen(false);
+      showToast(t.swapped);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("RATE_LIMITED")) showToast(t.rateLimited);
+      else if (msg.includes("CREDITS_EXHAUSTED")) showToast(t.creditsExhausted);
+      else showToast(t.aiError);
+    } finally {
+      setPlanLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-5 px-5 pb-8 pt-12 animate-fade-in-up">
       <header className="flex items-end justify-between gap-4">
@@ -123,6 +162,73 @@ function PlanPage() {
           <span className="text-muted-foreground">{t.favorites}</span>
         </div>
       </header>
+
+      <button
+        onClick={() => setPlanOpen(true)}
+        className="tap w-full rounded-3xl border border-border bg-card p-4 text-start shadow-soft flex items-center gap-3"
+      >
+        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-primary text-primary-foreground">
+          <Wand2 className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold">{t.createPlan}</p>
+          <p className="text-xs text-muted-foreground truncate">
+            {weekly ? `${weekly.goal} · ${weekly.dailyKcalTarget} kcal · ${Math.round(weekly.days.reduce((a,d)=>a+d.totalCost,0))} ${weekly.currency}` : t.selectGoal}
+          </p>
+        </div>
+        <Sparkles className="h-4 w-4 text-primary" />
+      </button>
+
+      {weekly && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-extrabold">{t.weeklyPlan}</h2>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {Math.round(weekly.days.reduce((a,d)=>a+d.totalCost,0))} / {weekly.weeklyBudget} {weekly.currency}
+            </span>
+          </div>
+          <ul className="space-y-2">
+            {weekly.days.map((d, i) => (
+              <li key={i} className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+                <details className="group">
+                  <summary className="flex cursor-pointer list-none items-center gap-3 p-3">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-muted text-xs font-bold">
+                      {t.days[i] ?? d.day}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold">{d.day}</p>
+                      <p className="text-xs text-muted-foreground tabular-nums">
+                        {d.totalKcal} kcal · {Math.round(d.totalCost)} {weekly.currency}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-90 rtl:rotate-180 rtl:group-open:rotate-90" />
+                  </summary>
+                  <div className="border-t border-border bg-muted/30 p-3 space-y-2">
+                    {d.meals.map((mm, j) => (
+                      <div key={j} className="rounded-xl bg-card p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold truncate">{mm.type} · {mm.name}</p>
+                          <span className="shrink-0 text-[11px] font-bold text-muted-foreground tabular-nums">
+                            {mm.kcal} kcal · {Math.round(mm.cost)} {weekly.currency}
+                          </span>
+                        </div>
+                        <ul className="mt-1.5 space-y-0.5">
+                          {mm.items.map((it, k) => (
+                            <li key={k} className="flex justify-between text-xs text-muted-foreground">
+                              <span className="truncate">{it.name}</span>
+                              <span className="shrink-0 tabular-nums">{it.qty}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className="rounded-3xl bg-gradient-hero p-5 text-primary-foreground shadow-glow">
         <p className="text-xs uppercase tracking-wider opacity-80">{t.dailyTarget}</p>
@@ -268,6 +374,73 @@ function PlanPage() {
           </div>
         );
       })()}
+
+      {planOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/40 backdrop-blur-sm p-0 sm:items-center sm:p-4 animate-fade-in-up" onClick={() => !planLoading && setPlanOpen(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-card border border-border shadow-card p-5 space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t.weeklyPlan}</p>
+                <h2 className="text-lg font-extrabold flex items-center gap-2"><Wand2 className="h-4 w-4 text-primary" /> {t.createPlan}</h2>
+              </div>
+              <button onClick={() => !planLoading && setPlanOpen(false)} className="tap grid h-9 w-9 place-items-center rounded-full bg-muted">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground">{t.selectGoal}</label>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { id: "bulk" as const, label: t.goalBulk },
+                  { id: "cut" as const, label: t.goalCut },
+                  { id: "lose" as const, label: t.goalLose },
+                ]).map(g => (
+                  <button
+                    key={g.id}
+                    onClick={() => setGoal(g.id)}
+                    disabled={planLoading}
+                    className={`tap rounded-2xl py-3 text-xs font-bold border transition-all ${goal === g.id ? "bg-gradient-primary text-primary-foreground border-transparent shadow-glow" : "bg-card text-foreground border-border"}`}
+                  >
+                    {g.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-2 space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">{t.weeklyBudget}</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={budget}
+                  onChange={(e) => setBudget(e.target.value)}
+                  disabled={planLoading}
+                  className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary disabled:opacity-50 tabular-nums"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">{t.currency}</label>
+                <input
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value.toUpperCase().slice(0, 4))}
+                  disabled={planLoading}
+                  className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm outline-none focus:border-primary disabled:opacity-50 uppercase"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={runWeeklyPlan}
+              disabled={planLoading}
+              className="tap w-full rounded-2xl bg-gradient-primary py-3.5 text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-70 flex items-center justify-center gap-2"
+            >
+              {planLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> {t.generating}</> : <><Sparkles className="h-4 w-4" /> {t.generatePlan}</>}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
