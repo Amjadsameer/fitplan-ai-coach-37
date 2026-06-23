@@ -30,6 +30,7 @@ interface Meal {
 function PlanPage() {
   const { t, lang } = useApp();
   const swapFn = useServerFn(generateMealSwap);
+  const weeklyFn = useServerFn(generateWeeklyPlan);
   const [completed, setCompleted] = useState<Record<string, boolean>>({ breakfast: true });
   const [variantIdx] = useState<Record<string, number>>({});
   const [aiOverrides, setAiOverrides] = useState<Record<string, MealVariant>>({});
@@ -38,6 +39,20 @@ function PlanPage() {
   const [aiMealId, setAiMealId] = useState<string | null>(null);
   const [ingredients, setIngredients] = useState("");
   const [loading, setLoading] = useState(false);
+  const [planOpen, setPlanOpen] = useState(false);
+  const [goal, setGoal] = useState<Goal>("cut");
+  const [budget, setBudget] = useState("100");
+  const [currency, setCurrency] = useState("USD");
+  const [planLoading, setPlanLoading] = useState(false);
+  const [weekly, setWeekly] = useState<WeeklyPlan | null>(null);
+
+  useEffect(() => {
+    const w = localStorage.getItem("fp_weekly");
+    if (w) try { setWeekly(JSON.parse(w)); } catch {}
+  }, []);
+  useEffect(() => {
+    if (weekly) localStorage.setItem("fp_weekly", JSON.stringify(weekly));
+  }, [weekly]);
 
   useEffect(() => {
     const f = localStorage.getItem("fp_favorites");
