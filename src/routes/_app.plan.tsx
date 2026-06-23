@@ -149,6 +149,9 @@ function PlanPage() {
     try {
       const res = await weeklyFn({ data: { goal, budget: b, currency, lang } });
       setWeekly(res);
+      setSelectedDay(0);
+      setAiOverrides({});
+      setCompleted({});
       setPlanOpen(false);
       showToast(t.swapped);
     } catch (err: unknown) {
