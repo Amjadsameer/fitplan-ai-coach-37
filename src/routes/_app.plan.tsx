@@ -192,54 +192,29 @@ function PlanPage() {
       </button>
 
       {weekly && (
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-extrabold">{t.weeklyPlan}</h2>
-            <span className="text-xs text-muted-foreground tabular-nums">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">{t.weeklyPlan}</h2>
+            <span className="text-[11px] font-semibold text-muted-foreground tabular-nums">
               {Math.round(weekly.days.reduce((a,d)=>a+d.totalCost,0))} / {weekly.weeklyBudget} {weekly.currency}
             </span>
           </div>
-          <ul className="space-y-2">
-            {weekly.days.map((d, i) => (
-              <li key={i} className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
-                <details className="group">
-                  <summary className="flex cursor-pointer list-none items-center gap-3 p-3">
-                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-muted text-xs font-bold">
-                      {t.days[i] ?? d.day}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold">{d.day}</p>
-                      <p className="text-xs text-muted-foreground tabular-nums">
-                        {d.totalKcal} kcal · {Math.round(d.totalCost)} {weekly.currency}
-                      </p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-90 rtl:rotate-180 rtl:group-open:rotate-90" />
-                  </summary>
-                  <div className="border-t border-border bg-muted/30 p-3 space-y-2">
-                    {d.meals.map((mm, j) => (
-                      <div key={j} className="rounded-xl bg-card p-3">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-semibold truncate">{mm.type} · {mm.name}</p>
-                          <span className="shrink-0 text-[11px] font-bold text-muted-foreground tabular-nums">
-                            {mm.kcal} kcal · {Math.round(mm.cost)} {weekly.currency}
-                          </span>
-                        </div>
-                        <ul className="mt-1.5 space-y-0.5">
-                          {mm.items.map((it, k) => (
-                            <li key={k} className="flex justify-between text-xs text-muted-foreground">
-                              <span className="truncate">{it.name}</span>
-                              <span className="shrink-0 tabular-nums">{it.qty}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              </li>
-            ))}
-          </ul>
-        </section>
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-none -mx-1 px-1 pb-1">
+            {weekly.days.map((d, i) => {
+              const active = i === selectedDay;
+              return (
+                <button
+                  key={i}
+                  onClick={() => setSelectedDay(i)}
+                  className={`tap shrink-0 rounded-2xl px-3 py-2 text-center transition-all ${active ? "bg-gradient-primary text-primary-foreground shadow-glow" : "bg-card border border-border text-foreground"}`}
+                >
+                  <p className="text-[10px] font-bold uppercase opacity-80">{t.days[i] ?? d.day.slice(0, 3)}</p>
+                  <p className="text-[11px] font-semibold tabular-nums">{d.totalKcal}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       <div className="rounded-3xl bg-gradient-hero p-5 text-primary-foreground shadow-glow">
