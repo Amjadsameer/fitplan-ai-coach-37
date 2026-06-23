@@ -63,24 +63,35 @@ function PlanPage() {
     localStorage.setItem("fp_favorites", JSON.stringify(favorites));
   }, [favorites]);
 
-  const meals: Meal[] = useMemo(() => [
-    { id: "breakfast", type: t.breakfast, time: "08:00", variants: [
-      { kcal: 420, p: 28, c: 52, f: 12, items: [{ name: t.meals.oatmeal, qty: "80g" }, { name: t.meals.greekYogurt, qty: "150g" }] },
-      { kcal: 410, p: 30, c: 38, f: 16, items: [{ name: t.meals.eggs, qty: "3 eggs" }, { name: "Avocado toast", qty: "1 slice" }] },
-    ]},
-    { id: "lunch", type: t.lunch, time: "13:00", variants: [
-      { kcal: 650, p: 48, c: 70, f: 18, items: [{ name: t.meals.chicken, qty: "180g" }, { name: "Mixed salad", qty: "200g" }] },
-      { kcal: 640, p: 50, c: 65, f: 20, items: [{ name: "Beef & rice bowl", qty: "180g" }, { name: "Steamed veg", qty: "200g" }] },
-    ]},
-    { id: "dinner", type: t.dinner, time: "19:30", variants: [
-      { kcal: 580, p: 42, c: 55, f: 20, items: [{ name: t.meals.salmon, qty: "200g" }, { name: "Sweet potato", qty: "150g" }] },
-      { kcal: 570, p: 44, c: 50, f: 22, items: [{ name: "Tuna pasta", qty: "200g" }, { name: "Green beans", qty: "150g" }] },
-    ]},
-    { id: "snacks", type: t.snacks, time: "16:00", variants: [
-      { kcal: 220, p: 14, c: 22, f: 8, items: [{ name: t.meals.greekYogurt, qty: "120g" }] },
-      { kcal: 210, p: 12, c: 25, f: 7, items: [{ name: "Protein shake", qty: "1 scoop" }, { name: "Banana", qty: "1" }] },
-    ]},
-  ], [t]);
+  const meals: Meal[] = useMemo(() => {
+    if (weekly && weekly.days[selectedDay]) {
+      const times = ["08:00", "13:00", "16:00", "19:30", "21:30"];
+      return weekly.days[selectedDay].meals.map((mm, i) => ({
+        id: `w${selectedDay}-${i}`,
+        type: mm.type,
+        time: times[i] ?? "—",
+        variants: [{ kcal: mm.kcal, p: mm.p, c: mm.c, f: mm.f, items: [{ name: mm.name, qty: "" }, ...mm.items] }],
+      }));
+    }
+    return [
+      { id: "breakfast", type: t.breakfast, time: "08:00", variants: [
+        { kcal: 420, p: 28, c: 52, f: 12, items: [{ name: t.meals.oatmeal, qty: "80g" }, { name: t.meals.greekYogurt, qty: "150g" }] },
+        { kcal: 410, p: 30, c: 38, f: 16, items: [{ name: t.meals.eggs, qty: "3 eggs" }, { name: "Avocado toast", qty: "1 slice" }] },
+      ]},
+      { id: "lunch", type: t.lunch, time: "13:00", variants: [
+        { kcal: 650, p: 48, c: 70, f: 18, items: [{ name: t.meals.chicken, qty: "180g" }, { name: "Mixed salad", qty: "200g" }] },
+        { kcal: 640, p: 50, c: 65, f: 20, items: [{ name: "Beef & rice bowl", qty: "180g" }, { name: "Steamed veg", qty: "200g" }] },
+      ]},
+      { id: "dinner", type: t.dinner, time: "19:30", variants: [
+        { kcal: 580, p: 42, c: 55, f: 20, items: [{ name: t.meals.salmon, qty: "200g" }, { name: "Sweet potato", qty: "150g" }] },
+        { kcal: 570, p: 44, c: 50, f: 22, items: [{ name: "Tuna pasta", qty: "200g" }, { name: "Green beans", qty: "150g" }] },
+      ]},
+      { id: "snacks", type: t.snacks, time: "16:00", variants: [
+        { kcal: 220, p: 14, c: 22, f: 8, items: [{ name: t.meals.greekYogurt, qty: "120g" }] },
+        { kcal: 210, p: 12, c: 25, f: 7, items: [{ name: "Protein shake", qty: "1 scoop" }, { name: "Banana", qty: "1" }] },
+      ]},
+    ];
+  }, [t, weekly, selectedDay]);
 
   const getVariant = (m: Meal): MealVariant =>
     aiOverrides[m.id] ?? m.variants[(variantIdx[m.id] ?? 0) % m.variants.length];
