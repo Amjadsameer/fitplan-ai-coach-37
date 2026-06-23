@@ -130,6 +130,25 @@ function PlanPage() {
     setFavorites(f => f.includes(name) ? f.filter(x => x !== name) : [...f, name]);
   };
 
+  const runWeeklyPlan = async () => {
+    const b = parseFloat(budget);
+    if (!b || b <= 0) return;
+    setPlanLoading(true);
+    try {
+      const res = await weeklyFn({ data: { goal, budget: b, currency, lang } });
+      setWeekly(res);
+      setPlanOpen(false);
+      showToast(t.swapped);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("RATE_LIMITED")) showToast(t.rateLimited);
+      else if (msg.includes("CREDITS_EXHAUSTED")) showToast(t.creditsExhausted);
+      else showToast(t.aiError);
+    } finally {
+      setPlanLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-5 px-5 pb-8 pt-12 animate-fade-in-up">
       <header className="flex items-end justify-between gap-4">
