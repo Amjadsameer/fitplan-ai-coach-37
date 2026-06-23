@@ -1,13 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, ChevronRight, Clock, Heart, Loader2, Sparkles, X } from "lucide-react";
+import { Check, ChevronRight, Clock, Heart, Loader2, Sparkles, Wand2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/lib/i18n";
-import { generateMealSwap } from "@/lib/meals.functions";
+import { generateMealSwap, generateWeeklyPlan } from "@/lib/meals.functions";
 
 export const Route = createFileRoute("/_app/plan")({
   component: PlanPage,
 });
+
+type Goal = "bulk" | "cut" | "lose";
+interface WeeklyMeal { type: string; name: string; items: { name: string; qty: string }[]; kcal: number; p: number; c: number; f: number; cost: number; }
+interface WeeklyDay { day: string; totalKcal: number; totalCost: number; meals: WeeklyMeal[]; }
+interface WeeklyPlan { goal: string; dailyKcalTarget: number; weeklyBudget: number; currency: string; days: WeeklyDay[]; }
 
 interface MealItem { name: string; qty: string; }
 interface MealVariant {
