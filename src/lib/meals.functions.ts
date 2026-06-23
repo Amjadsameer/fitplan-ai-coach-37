@@ -39,16 +39,26 @@ Respond in ${lang}. Keep item names short. Quantities must include units (g, ml,
 Provide realistic protein (p), carbs (c), fat (f) in grams that match the calorie target.`;
 
     try {
-      const { experimental_output } = await generateText({
+      const { text } = await generateText({
         model: gateway("google/gemini-3-flash-preview"),
-        prompt,
-        experimental_output: Output.object({ schema: RecipeSchema }),
+        prompt: `${prompt}
+
+Respond ONLY with a valid JSON object (no markdown fences, no prose) matching:
+{ "name": string, "items": { "name": string, "qty": string }[], "kcal": number, "p": number, "c": number, "f": number }`,
       });
-      return experimental_output;
+
+      let cleaned = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+      const start = cleaned.search(/[\{\[]/);
+      const end = cleaned.lastIndexOf("}");
+      if (start !== -1 && end !== -1) cleaned = cleaned.slice(start, end + 1);
+
+      const parsed = JSON.parse(cleaned);
+      return RecipeSchema.parse(parsed);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
+      console.error("generateMealSwap failed:", msg);
       if (msg.includes("429")) throw new Error("RATE_LIMITED");
       if (msg.includes("402")) throw new Error("CREDITS_EXHAUSTED");
-      throw new Error("AI_ERROR");
+      throw new Error(`AI_ERROR: ${msg.slice(0, 200)}`);
     }
   });
