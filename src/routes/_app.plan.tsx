@@ -45,6 +45,7 @@ function PlanPage() {
   const [currency, setCurrency] = useState("USD");
   const [planLoading, setPlanLoading] = useState(false);
   const [weekly, setWeekly] = useState<WeeklyPlan | null>(null);
+  const [selectedDay, setSelectedDay] = useState(0);
 
   useEffect(() => {
     const w = localStorage.getItem("fp_weekly");
