@@ -117,7 +117,20 @@ export const generateWeeklyPlan = createServerFn({ method: "POST" })
       lose: "weight loss (clear calorie deficit, high protein, high fiber)",
     } as const;
 
-    const prompt = `Build a 7-day meal plan for the goal: ${goalMap[data.goal]}.
+    let profileBlock = "";
+    if (data.profile) {
+      const p = data.profile;
+      const base = 10 * p.weight + 6.25 * p.height - 5 * p.age + (p.sex === "male" ? 5 : -161);
+      const mult = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725, very_active: 1.9 }[p.activity];
+      const tdee = Math.round(base * mult);
+      const target = data.goal === "bulk" ? tdee + 350 : data.goal === "cut" ? tdee - 400 : tdee - 500;
+      const proteinG = Math.round(p.weight * (data.goal === "bulk" ? 2 : data.goal === "cut" ? 2.2 : 1.8));
+      profileBlock = `\nUser profile: ${p.sex}, age ${p.age}, height ${p.height}cm, weight ${p.weight}kg, activity ${p.activity}.
+Estimated TDEE: ~${tdee} kcal. Target daily intake: ~${target} kcal (±5%). Target protein: ~${proteinG}g/day.
+Use dailyKcalTarget = ${target} and design every day's totalKcal within ±5% of that.`;
+    }
+
+    const prompt = `Build a 7-day meal plan for the goal: ${goalMap[data.goal]}.${profileBlock}
 Total weekly food budget: ${data.budget} ${data.currency} (sum of all days must be <= budget, prefer ~90-100% utilization).
 Each day must have 4 meals (breakfast, lunch, dinner, snack) with realistic ingredients, quantities (with units), kcal, protein/carbs/fat in grams, and an estimated cost in ${data.currency}.
 Respond in ${lang}. Keep names short. Realistic macros that match kcal.
