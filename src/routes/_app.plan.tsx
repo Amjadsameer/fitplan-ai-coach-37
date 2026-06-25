@@ -149,7 +149,7 @@ function PlanPage() {
     if (!b || b <= 0) return;
     setPlanLoading(true);
     try {
-      const res = await weeklyFn({ data: { goal, budget: b, currency, lang } });
+      const res = await weeklyFn({ data: { goal, budget: b, currency, lang, profile } });
       setWeekly(res);
       setSelectedDay(0);
       setAiOverrides({});
