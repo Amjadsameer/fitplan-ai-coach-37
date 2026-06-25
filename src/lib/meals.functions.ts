@@ -68,6 +68,13 @@ const WeeklyInputSchema = z.object({
   budget: z.number().positive(),
   currency: z.string().max(8).default("USD"),
   lang: z.enum(["en", "ar"]).default("en"),
+  profile: z.object({
+    height: z.number().positive(),
+    weight: z.number().positive(),
+    age: z.number().int().positive(),
+    sex: z.enum(["male", "female"]),
+    activity: z.enum(["sedentary", "light", "moderate", "active", "very_active"]),
+  }).optional(),
 });
 
 const DayMealSchema = z.object({
