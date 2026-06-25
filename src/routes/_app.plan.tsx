@@ -30,6 +30,7 @@ interface Meal {
 
 function PlanPage() {
   const { t, lang } = useApp();
+  const [profile] = useProfile();
   const swapFn = useServerFn(generateMealSwap);
   const weeklyFn = useServerFn(generateWeeklyPlan);
   const [completed, setCompleted] = useState<Record<string, boolean>>({ breakfast: true });
