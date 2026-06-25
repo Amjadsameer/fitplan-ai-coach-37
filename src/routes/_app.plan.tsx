@@ -4,6 +4,7 @@ import { Check, ChevronRight, Clock, Heart, Loader2, Sparkles, Wand2, X } from "
 import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/lib/i18n";
 import { generateMealSwap, generateWeeklyPlan } from "@/lib/meals.functions";
+import { tdee, useProfile } from "@/lib/profile";
 
 export const Route = createFileRoute("/_app/plan")({
   component: PlanPage,
@@ -29,6 +30,7 @@ interface Meal {
 
 function PlanPage() {
   const { t, lang } = useApp();
+  const [profile] = useProfile();
   const swapFn = useServerFn(generateMealSwap);
   const weeklyFn = useServerFn(generateWeeklyPlan);
   const [completed, setCompleted] = useState<Record<string, boolean>>({ breakfast: true });
@@ -147,7 +149,7 @@ function PlanPage() {
     if (!b || b <= 0) return;
     setPlanLoading(true);
     try {
-      const res = await weeklyFn({ data: { goal, budget: b, currency, lang } });
+      const res = await weeklyFn({ data: { goal, budget: b, currency, lang, profile } });
       setWeekly(res);
       setSelectedDay(0);
       setAiOverrides({});
@@ -396,6 +398,11 @@ function PlanPage() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div className="flex items-center justify-between rounded-2xl bg-muted/50 px-4 py-3 text-xs">
+              <span className="text-muted-foreground">{profile.sex === "male" ? t.male : t.female} · {profile.age} · {profile.height}cm · {profile.weight}{t.kg}</span>
+              <span className="font-bold tabular-nums">{tdee(profile)} kcal</span>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
