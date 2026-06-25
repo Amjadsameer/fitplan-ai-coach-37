@@ -1,0 +1,17 @@
+{
+  "name": "FitPlan AI — Personalized Nutrition",
+  "short_name": "FitPlan AI",
+  "description": "AI-powered nutrition coaching for gym members. Daily meal plans, macros, and progress tracking.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0e1a26",
+  "theme_color": "#0e1a26",
+  "categories": ["health", "fitness", "lifestyle"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
