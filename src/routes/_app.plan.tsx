@@ -400,7 +400,10 @@ function PlanPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="flex items-center justify-between rounded-2xl bg-muted/50 px-4 py-3 text-xs">
+              <span className="text-muted-foreground">{profile.sex === "male" ? t.male : t.female} · {profile.age} · {profile.height}cm · {profile.weight}{t.kg}</span>
+              <span className="font-bold tabular-nums">{tdee(profile)} kcal</span>
+            </div>
               <div className="col-span-2 space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground">{t.weeklyBudget}</label>
                 <input
