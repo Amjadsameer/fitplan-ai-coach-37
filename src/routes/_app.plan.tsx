@@ -4,6 +4,7 @@ import { Check, ChevronRight, Clock, Heart, Loader2, Sparkles, Wand2, X } from "
 import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/lib/i18n";
 import { generateMealSwap, generateWeeklyPlan } from "@/lib/meals.functions";
+import { tdee, useProfile } from "@/lib/profile";
 
 export const Route = createFileRoute("/_app/plan")({
   component: PlanPage,
