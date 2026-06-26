@@ -1,5 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Activity, Bell, Droplets, Globe, LogOut, Moon, Ruler, Scale, Sun, Target, User as UserIcon, Utensils } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Activity, Bell, Droplets, Globe, LogOut, Moon, Ruler, Scale, Shield, Sun, Target, User as UserIcon, Utensils } from "lucide-react";
 import { useState } from "react";
 import { useApp } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -11,7 +11,7 @@ export const Route = createFileRoute("/_app/profile")({
 
 function ProfilePage() {
   const { t, lang, setLang, theme, toggleTheme } = useApp();
-  const { email, logout } = useAuth();
+  const { email, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useProfile();
   const name = (email?.split("@")[0] ?? "Athlete").replace(/^\w/, c => c.toUpperCase());
@@ -100,8 +100,14 @@ function ProfilePage() {
         <Row icon={<Droplets className="h-4 w-4" />} label={t.waterReminders}><Toggle defaultOn /></Row>
       </section>
 
+      {isAdmin && (
+        <Link to="/admin" className="tap flex w-full items-center justify-center gap-2 rounded-2xl border border-primary/30 bg-primary/10 py-4 text-sm font-semibold text-primary">
+          <Shield className="h-4 w-4" /> {t.adminDashboard}
+        </Link>
+      )}
+
       <button
-        onClick={() => { logout(); navigate({ to: "/login" }); }}
+        onClick={async () => { await logout(); navigate({ to: "/login" }); }}
         className="tap flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/10 py-4 text-sm font-semibold text-destructive"
       >
         <LogOut className="h-4 w-4 rtl:rotate-180" /> {t.logout}

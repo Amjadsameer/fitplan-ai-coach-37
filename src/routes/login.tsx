@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Eye, EyeOff, Dumbbell } from "lucide-react";
+import { Eye, EyeOff, Dumbbell, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useApp } from "@/lib/i18n";
 
@@ -16,15 +16,23 @@ function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(true);
   const [show, setShow] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
-  if (isAuthed) return <Navigate to="/" />;
+  if (isAuthed) return <Navigate to={(redirect === "/login" ? "/" : redirect) as "/"} />;
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    login(email || "athlete@fitplan.ai", remember);
-    navigate({ to: redirect || "/" });
+    if (!email || !password) { setErr(lang === "ar" ? "أدخل البريد وكلمة المرور" : "Enter email and password"); return; }
+    setBusy(true); setErr(null);
+    const { error } = await login(email, password);
+    setBusy(false);
+    if (error) {
+      setErr(lang === "ar" ? "بيانات الدخول غير صحيحة" : error);
+      return;
+    }
+    navigate({ to: (redirect === "/login" ? "/" : redirect) as "/" });
   };
 
   return (
@@ -59,6 +67,7 @@ function LoginPage() {
           <label className="text-xs font-semibold text-muted-foreground">{t.email}</label>
           <input
             type="email"
+            autoComplete="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
             placeholder="you@gym.com"
@@ -71,6 +80,7 @@ function LoginPage() {
           <div className="relative">
             <input
               type={show ? "text" : "password"}
+              autoComplete="current-password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -82,15 +92,14 @@ function LoginPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} className="h-4 w-4 accent-[var(--color-primary)]" />
-            <span>{t.rememberMe}</span>
-          </label>
+        {err && <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">{err}</p>}
+
+        <div className="flex items-center justify-end">
           <Link to="/forgot-password" className="text-sm font-semibold text-primary">{t.forgotPassword}</Link>
         </div>
 
-        <button type="submit" className="tap mt-2 w-full rounded-2xl bg-gradient-primary py-4 font-semibold text-primary-foreground shadow-glow">
+        <button type="submit" disabled={busy} className="tap mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-primary py-4 font-semibold text-primary-foreground shadow-glow disabled:opacity-60">
+          {busy && <Loader2 className="h-4 w-4 animate-spin" />}
           {t.signIn}
         </button>
       </form>
