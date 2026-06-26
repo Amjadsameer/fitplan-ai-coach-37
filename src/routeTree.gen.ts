@@ -17,7 +17,6 @@ import { Route as AppProgressRouteImport } from './routes/_app.progress'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppPlanRouteImport } from './routes/_app.plan'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
-import { Route as ApiPublicBootstrapAdminRouteImport } from './routes/api.public.bootstrap-admin'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -58,11 +57,6 @@ const AppAdminRoute = AppAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AppRoute,
 } as any)
-const ApiPublicBootstrapAdminRoute = ApiPublicBootstrapAdminRouteImport.update({
-  id: '/api/public/bootstrap-admin',
-  path: '/api/public/bootstrap-admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -72,7 +66,6 @@ export interface FileRoutesByFullPath {
   '/plan': typeof AppPlanRoute
   '/profile': typeof AppProfileRoute
   '/progress': typeof AppProgressRoute
-  '/api/public/bootstrap-admin': typeof ApiPublicBootstrapAdminRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
@@ -82,7 +75,6 @@ export interface FileRoutesByTo {
   '/profile': typeof AppProfileRoute
   '/progress': typeof AppProgressRoute
   '/': typeof AppIndexRoute
-  '/api/public/bootstrap-admin': typeof ApiPublicBootstrapAdminRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -94,7 +86,6 @@ export interface FileRoutesById {
   '/_app/profile': typeof AppProfileRoute
   '/_app/progress': typeof AppProgressRoute
   '/_app/': typeof AppIndexRoute
-  '/api/public/bootstrap-admin': typeof ApiPublicBootstrapAdminRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -106,7 +97,6 @@ export interface FileRouteTypes {
     | '/plan'
     | '/profile'
     | '/progress'
-    | '/api/public/bootstrap-admin'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forgot-password'
@@ -116,7 +106,6 @@ export interface FileRouteTypes {
     | '/profile'
     | '/progress'
     | '/'
-    | '/api/public/bootstrap-admin'
   id:
     | '__root__'
     | '/_app'
@@ -127,14 +116,12 @@ export interface FileRouteTypes {
     | '/_app/profile'
     | '/_app/progress'
     | '/_app/'
-    | '/api/public/bootstrap-admin'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
-  ApiPublicBootstrapAdminRoute: typeof ApiPublicBootstrapAdminRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -195,13 +182,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRoute
     }
-    '/api/public/bootstrap-admin': {
-      id: '/api/public/bootstrap-admin'
-      path: '/api/public/bootstrap-admin'
-      fullPath: '/api/public/bootstrap-admin'
-      preLoaderRoute: typeof ApiPublicBootstrapAdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -227,7 +207,6 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
-  ApiPublicBootstrapAdminRoute: ApiPublicBootstrapAdminRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
