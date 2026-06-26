@@ -101,11 +101,8 @@ const WeeklyPlanSchema = z.object({
 export const generateWeeklyPlan = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => WeeklyInputSchema.parse(input))
   .handler(async ({ data }) => {
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing LOVABLE_API_KEY");
-
-    const { createLovableAiGatewayProvider } = await import("./ai-gateway.server");
-    const gateway = createLovableAiGatewayProvider(key);
+    const { getActiveAiModel } = await import("./ai-gateway.server");
+    const { model } = await getActiveAiModel();
 
     const lang = data.lang === "ar" ? "Arabic" : "English";
     const goalMap = {
@@ -152,10 +149,7 @@ Respond ONLY with a valid JSON object (no markdown, no prose) matching:
 Exactly 7 day entries.`;
 
     try {
-      const { text } = await generateText({
-        model: gateway("google/gemini-3-flash-preview"),
-        prompt,
-      });
+      const { text } = await generateText({ model, prompt });
       let cleaned = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
       const start = cleaned.search(/[\{\[]/);
       const end = cleaned.lastIndexOf("}");
