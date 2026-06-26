@@ -21,11 +21,8 @@ const RecipeSchema = z.object({
 export const generateMealSwap = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }) => {
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing LOVABLE_API_KEY");
-
-    const { createLovableAiGatewayProvider } = await import("./ai-gateway.server");
-    const gateway = createLovableAiGatewayProvider(key);
+    const { getActiveAiModel } = await import("./ai-gateway.server");
+    const { model } = await getActiveAiModel();
 
     const lang = data.lang === "ar" ? "Arabic" : "English";
     const ingHint = data.ingredients?.trim()
@@ -40,7 +37,7 @@ Provide realistic protein (p), carbs (c), fat (f) in grams that match the calori
 
     try {
       const { text } = await generateText({
-        model: gateway("google/gemini-3-flash-preview"),
+        model,
         prompt: `${prompt}
 
 Respond ONLY with a valid JSON object (no markdown fences, no prose) matching:
