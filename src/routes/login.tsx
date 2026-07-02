@@ -22,7 +22,7 @@ function LoginPage() {
   const [err, setErr] = useState<string | null>(null);
 
   const dest = (redirect && redirect !== "/login" ? redirect : (isAdmin ? "/admin" : "/")) as "/";
-  if (isAuthed) return <Navigate to={dest} />;
+  if (isAuthed && !busy) return <Navigate to={dest} />;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
