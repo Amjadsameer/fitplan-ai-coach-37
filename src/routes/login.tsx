@@ -36,12 +36,13 @@ function LoginPage() {
     }
     let target: string = redirect && redirect !== "/login" ? redirect : "/";
     if (userId && (!redirect || redirect === "/login")) {
-      const { data: role } = await supabase
+      const { data: role, error: rErr } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", userId)
         .eq("role", "admin")
         .maybeSingle();
+      console.log("[login] role check", { userId, role, rErr });
       if (role) target = "/admin";
     }
     setBusy(false);
