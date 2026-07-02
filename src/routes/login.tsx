@@ -22,28 +22,27 @@ function LoginPage() {
   const [err, setErr] = useState<string | null>(null);
 
   const dest = (redirect && redirect !== "/login" ? redirect : (isAdmin ? "/admin" : "/")) as "/";
-  if (isAuthed) return <Navigate to={dest} />;
+  if (isAuthed && !busy) return <Navigate to={dest} />;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) { setErr(lang === "ar" ? "أدخل البريد وكلمة المرور" : "Enter email and password"); return; }
     setBusy(true); setErr(null);
-    const { error } = await login(email, password);
+    const { error, userId } = await login(email, password);
     if (error) {
       setBusy(false);
       setErr(lang === "ar" ? "بيانات الدخول غير صحيحة" : error);
       return;
     }
-    // Check admin role directly to decide destination (auth context updates async)
-    const { data: sess } = await supabase.auth.getUser();
     let target: string = redirect && redirect !== "/login" ? redirect : "/";
-    if (sess.user && (!redirect || redirect === "/login")) {
-      const { data: role } = await supabase
+    if (userId && (!redirect || redirect === "/login")) {
+      const { data: role, error: rErr } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", sess.user.id)
+        .eq("user_id", userId)
         .eq("role", "admin")
         .maybeSingle();
+      
       if (role) target = "/admin";
     }
     setBusy(false);
