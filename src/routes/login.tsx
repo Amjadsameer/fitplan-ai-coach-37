@@ -3,15 +3,16 @@ import { useState } from "react";
 import { Eye, EyeOff, Dumbbell, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useApp } from "@/lib/i18n";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/login")({
-  validateSearch: (s: Record<string, unknown>) => ({ redirect: (s.redirect as string) ?? "/" }),
+  validateSearch: (s: Record<string, unknown>) => ({ redirect: (s.redirect as string) ?? "" }),
   component: LoginPage,
 });
 
 function LoginPage() {
   const { t, lang, setLang } = useApp();
-  const { isAuthed, login } = useAuth();
+  const { isAuthed, isAdmin, login } = useAuth();
   const { redirect } = Route.useSearch();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -20,19 +21,33 @@ function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  if (isAuthed) return <Navigate to={(redirect === "/login" ? "/" : redirect) as "/"} />;
+  const dest = (redirect && redirect !== "/login" ? redirect : (isAdmin ? "/admin" : "/")) as "/";
+  if (isAuthed) return <Navigate to={dest} />;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) { setErr(lang === "ar" ? "أدخل البريد وكلمة المرور" : "Enter email and password"); return; }
     setBusy(true); setErr(null);
     const { error } = await login(email, password);
-    setBusy(false);
     if (error) {
+      setBusy(false);
       setErr(lang === "ar" ? "بيانات الدخول غير صحيحة" : error);
       return;
     }
-    navigate({ to: (redirect === "/login" ? "/" : redirect) as "/" });
+    // Check admin role directly to decide destination (auth context updates async)
+    const { data: sess } = await supabase.auth.getUser();
+    let target: string = redirect && redirect !== "/login" ? redirect : "/";
+    if (sess.user && (!redirect || redirect === "/login")) {
+      const { data: role } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", sess.user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (role) target = "/admin";
+    }
+    setBusy(false);
+    navigate({ to: target as "/" });
   };
 
   return (
