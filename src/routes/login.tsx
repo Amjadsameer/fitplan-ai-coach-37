@@ -42,7 +42,7 @@ function LoginPage() {
         .eq("user_id", userId)
         .eq("role", "admin")
         .maybeSingle();
-      console.log("[login] role check", { userId, role, rErr: JSON.stringify(rErr) });
+      console.log("[login] role check", userId, role, rErr?.message, rErr?.code, rErr?.details, rErr?.hint);
       if (role) target = "/admin";
     }
     setBusy(false);
