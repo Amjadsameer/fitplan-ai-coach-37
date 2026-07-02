@@ -8,7 +8,7 @@ interface AuthCtx {
   user: User | null;
   email: string | null;
   isAdmin: boolean;
-  login: (email: string, password: string) => Promise<{ error: string | null }>;
+  login: (email: string, password: string) => Promise<{ error: string | null; userId: string | null }>;
   logout: () => Promise<void>;
 }
 
