@@ -16,6 +16,7 @@ import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppProgressRouteImport } from './routes/_app.progress'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppPlanRouteImport } from './routes/_app.plan'
+import { Route as AppOnboardingRouteImport } from './routes/_app.onboarding'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
 
 const LoginRoute = LoginRouteImport.update({
@@ -52,6 +53,11 @@ const AppPlanRoute = AppPlanRouteImport.update({
   path: '/plan',
   getParentRoute: () => AppRoute,
 } as any)
+const AppOnboardingRoute = AppOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdminRoute = AppAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/admin': typeof AppAdminRoute
+  '/onboarding': typeof AppOnboardingRoute
   '/plan': typeof AppPlanRoute
   '/profile': typeof AppProfileRoute
   '/progress': typeof AppProgressRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/admin': typeof AppAdminRoute
+  '/onboarding': typeof AppOnboardingRoute
   '/plan': typeof AppPlanRoute
   '/profile': typeof AppProfileRoute
   '/progress': typeof AppProgressRoute
@@ -82,6 +90,7 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/_app/admin': typeof AppAdminRoute
+  '/_app/onboarding': typeof AppOnboardingRoute
   '/_app/plan': typeof AppPlanRoute
   '/_app/profile': typeof AppProfileRoute
   '/_app/progress': typeof AppProgressRoute
@@ -94,6 +103,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/admin'
+    | '/onboarding'
     | '/plan'
     | '/profile'
     | '/progress'
@@ -102,6 +112,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/admin'
+    | '/onboarding'
     | '/plan'
     | '/profile'
     | '/progress'
@@ -112,6 +123,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/_app/admin'
+    | '/_app/onboarding'
     | '/_app/plan'
     | '/_app/profile'
     | '/_app/progress'
@@ -175,6 +187,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPlanRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/onboarding': {
+      id: '/_app/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AppOnboardingRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/admin': {
       id: '/_app/admin'
       path: '/admin'
@@ -187,6 +206,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
+  AppOnboardingRoute: typeof AppOnboardingRoute
   AppPlanRoute: typeof AppPlanRoute
   AppProfileRoute: typeof AppProfileRoute
   AppProgressRoute: typeof AppProgressRoute
@@ -195,6 +215,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAdminRoute: AppAdminRoute,
+  AppOnboardingRoute: AppOnboardingRoute,
   AppPlanRoute: AppPlanRoute,
   AppProfileRoute: AppProfileRoute,
   AppProgressRoute: AppProgressRoute,
