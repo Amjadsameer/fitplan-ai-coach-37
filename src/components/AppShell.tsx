@@ -5,7 +5,7 @@ import { useApp } from "@/lib/i18n";
 export function AppShell() {
   const { t } = useApp();
   const pathname = useRouterState({ select: s => s.location.pathname });
-  const isAdminPage = pathname === "/admin";
+  const isAdminPage = pathname === "/admin" || pathname === "/onboarding";
 
   const tabs = [
     { to: "/", icon: Home, label: t.home },
